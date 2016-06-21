@@ -1,1 +1,0 @@
-cmd_/home/test/modules/slab_probe/test.ko := ld -r -m elf_i386 -T ./scripts/module-common.lds --build-id  -o /home/test/modules/slab_probe/test.ko /home/test/modules/slab_probe/test.o /home/test/modules/slab_probe/test.mod.o
