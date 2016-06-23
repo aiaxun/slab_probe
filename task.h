@@ -6,6 +6,6 @@
  */
 
 // iterate tasks
-void all_task(void);
+struct task_struct * find_task_by_pid(pid_t pid);
+void list_task_objects(struct task_struct *task);
 
-struct task_struct *find_task(pid_t pid);
