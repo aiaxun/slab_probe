@@ -7,6 +7,7 @@
 #include <linux/miscdevice.h>
 #include <linux/sched.h>
 #include <linux/pid.h>
+#include <asm/page.h>
 #include "dev.h"
 #include "task.h"
 
@@ -15,6 +16,7 @@ static struct task_struct *target = NULL;
 static int readed = 0;
 static int mycdev_open(struct inode *inode, struct file *fp)
 {
+    printk("**************************************\n");
     if (!task) {
         task = current;
         printk("task %s is using this module\n", task->comm);
@@ -43,6 +45,7 @@ static int mycdev_release(struct inode *inode, struct file *fp)
     if (task) {
         printk("task %s release this module\n", task->comm);
         task = NULL;
+        target = NULL;
     }
 	return 0;
 }
@@ -83,8 +86,11 @@ static ssize_t mycdev_read(struct file *fp, char __user *buf, size_t size, loff_
 
 static int mycdev_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
-    struct inode *inode = file_inode(file);
     int ret = 0;
+    struct page *slab_page;
+    void __user *argp = (void __user *)arg;
+    struct socket *socket;
+    struct page *first_page;
     printk("cmd = %u, arg = %lu\n", cmd, arg);
     
     /*
@@ -106,10 +112,48 @@ static int mycdev_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
             
         break;
         case DUMP_OBJECT:
+            if (!target) {
+                printk("do not attach task now !\n");
+                ret = -1;
+                break;
+            }
+            printk("listing object %s\n", target->comm);
+            socket = get_one_socket_object(target);
+            if (socket) {
+                printk("%p\t", socket);
+                slab_page = virt_to_page(socket);
+                if (slab_page) {
+                    printk("get a slab page, slab head: %p, %p\n", slab_page->first_page, slab_page->slab_cache);
+                    //first_page = virt_to_page(&slab_page->first_page);
+                    first_page = slab_page->first_page;
+                    printk("first_page:%p\n", first_page);
+                    printk("s_mem:%p\n", first_page->s_mem);
+                    printk("freelist:%p\n", first_page->freelist);
+                    printk("counters:%d\n", first_page->counters);
+                    printk("inuse:%d, object:%d, frozen:%d\n", first_page->inuse, first_page->objects, first_page->frozen);
+                    printk("next page:%p\n", first_page->next);
+                    printk("slab_page:%p\n", first_page->slab_page);
+
+                }
+                printk("sock_inode_cachep:%p\n", sock_inode_cachep);
+
+                copy_to_user(argp, &slab_page->first_page, 4);
+            }
+            ret = 0;
+            
         break;
         case MMAP_KPAGES:
+            printk("here\n");
         break;
         case DUMP_STACK:
+        break;
+        case COUNT_OBJECT:
+            if (!target) {
+                printk("do not attach task now\n");
+                ret = -1;
+                break;
+            }
+        
         break;
         defult:
         break;
@@ -123,17 +167,6 @@ static ssize_t mycdev_write(struct file *fp, const char __user *buf, size_t size
 	return size;
 }
 
-/*filling the mycdev's file operation interface in the struct file_operations*/
-/*
-static const struct file_operations mycdev_fops =
-{
-	.owner = THIS_MODULE,
-	.read = mycdev_read,
-	.write = mycdev_write,
-	.open = mycdev_open,
-	.release = mycdev_release,
-};
-*/
 
 static const struct file_operations mycdev_fops = {
     .owner = THIS_MODULE,

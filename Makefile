@@ -1,5 +1,5 @@
 obj-m+=kobj.o
-kobj-objs := test.o dev.o task.o
+kobj-objs := test.o dev.o task.o slab.o
 CURRENT_PATH:=$(shell pwd)
 
 VERSION_NUM:=$(shell uname -r)

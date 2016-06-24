@@ -8,4 +8,5 @@
 // iterate tasks
 struct task_struct * find_task_by_pid(pid_t pid);
 void list_task_objects(struct task_struct *task);
+struct socket *get_one_socket_object(struct task_struct *);
 

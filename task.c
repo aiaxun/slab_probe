@@ -37,29 +37,49 @@ void list_task_objects(struct task_struct *task)
     struct path *f_path;
     struct dentry *dentry;
     char buf[255], *path;
+    
 
     if (!task) {
         printk("task pointer in NULL\n");
         return ;
     }
-    printk("%d\t%s\n", task->pid, task->comm);
+    //printk("%d\t%s\n", task->pid, task->comm);
     fdt = task->files->fdt;
     for (i=0;i<fdt->max_fds; i++)
     {
         tmp_file = fdt->fd[i];
         if (!tmp_file) {
-            break;
+            continue;
         }
         socket = sock_from_file(tmp_file, &err);
         if (socket) {
             f_path = &tmp_file->f_path;
             dentry = f_path->dentry;
             path = d_path(f_path, buf, 255);
-            printk("find socket %p\tname:[%s]\t",socket, path);
-            printk("%s, %s\t", dentry->d_iname, dentry->d_parent->d_iname);
-            printk("\n\n");
+            //printk("find socket %p\tname:[%s]\t",socket, path);
+            //printk("%s, %s\t", dentry->d_iname, dentry->d_parent->d_iname);
+            //printk("\n\n");
         }
     }
     
 }
-
+struct socket *get_one_socket_object(struct task_struct *task)
+{
+    struct fdtable *fdt;
+    struct file *f;
+    int i,err;
+    struct socket *s;
+    if (!task) { return NULL; }
+    fdt = task->files->fdt;
+    for (i=0;i<fdt->max_fds;i++)
+    {
+        f = fdt->fd[i];
+        if (!f) continue;
+        s = sock_from_file(f, &err);
+        if (s) {
+            printk("find socket object \n");
+            return s;
+        }
+    }
+    return NULL;
+}

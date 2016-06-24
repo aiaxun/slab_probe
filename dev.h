@@ -6,12 +6,13 @@
 #include <linux/types.h>
 #include <asm/uaccess.h>
 
-#define MYCDEV_SIZE 1024
+#define MYCDEV_SIZE 128
 
 #define ATTACH_TASK 1
-#define DUMP_OBJECT 2
-#define MMAP_KPAGES 3
-#define DUMP_STACK  4
+#define DUMP_OBJECT 3 
+#define MMAP_KPAGES 5
+#define DUMP_STACK  7
+#define COUNT_OBJECT 9
 
 //int mycdev_open(struct inode *inode, struct file *fp);
 //int mycdev_release(struct inode *inode, struct file *fp);
