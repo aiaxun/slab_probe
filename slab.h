@@ -42,3 +42,4 @@ void get_map(struct kmem_cache *s, struct page *page, unsigned long *map);
 void list_slab_objects(struct kmem_cache *s, struct page *page);
 
 struct list_head *get_slab_head(void);
+

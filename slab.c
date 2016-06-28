@@ -1,4 +1,5 @@
 #include "slab.h"
+#include <linux/skbuff.h>
 static struct list_head *slabs;
 
 

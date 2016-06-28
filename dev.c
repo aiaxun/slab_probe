@@ -16,7 +16,6 @@ static struct task_struct *target = NULL;
 static int readed = 0;
 static int mycdev_open(struct inode *inode, struct file *fp)
 {
-    printk("**************************************\n");
     if (!task) {
         task = current;
         printk("task %s is using this module\n", task->comm);
@@ -91,6 +90,8 @@ static int mycdev_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
     void __user *argp = (void __user *)arg;
     struct socket *socket;
     struct page *first_page;
+
+    int counter;
     printk("cmd = %u, arg = %lu\n", cmd, arg);
     
     /*
@@ -119,6 +120,7 @@ static int mycdev_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
             }
             printk("listing object %s\n", target->comm);
             socket = get_one_socket_object(target);
+            printk("socket object size: %d\n", sizeof(struct socket));
             if (socket) {
                 printk("%p\t", socket);
                 slab_page = virt_to_page(socket);
@@ -135,10 +137,18 @@ static int mycdev_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
                     printk("slab_page:%p\n", first_page->slab_page);
 
                 }
-                printk("sock_inode_cachep:%p\n", sock_inode_cachep);
-
-                copy_to_user(argp, &slab_page->first_page, 4);
+                //printk("sock_inode_cachep:%p\n", sock_inode_cachep);
+                //copy_to_user(argp, &slab_page->first_page, 4);
+                copy_to_user(argp, socket, sizeof(struct socket));
+                printk("socket->state:  %d\n", socket->state);
+                printk("socket->type:   %d\n", socket->type);
+                printk("socket->flags:  %ld\n", socket->flags);
+                printk("socket->wq:     %p\n", socket->wq);
+                printk("socket->file:   %p\n", socket->file);
+                printk("socket->sk:     %p\n", socket->sk);
+                printk("socket->ops:    %p\n", socket->ops);
             }
+            analysis_socket(socket);
             ret = 0;
             
         break;
@@ -153,6 +163,10 @@ static int mycdev_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
                 ret = -1;
                 break;
             }
+            counter = count_task_socket_objects(target);
+            printk("counter %d\n", counter);
+            copy_to_user(argp, &counter, 1);
+            ret = 0;
         
         break;
         defult:
